@@ -1,0 +1,309 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<title>Dropbox - Cloud</title>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<style>
+* {
+  box-sizing: border-box;
+}
+
+body {
+  font-family: Arial, Helvetica, sans-serif;
+}
+
+/* Style the header */
+header {
+  background-color: #666;
+  padding: 30px;
+  text-align: center;
+  font-size: 35px;
+  color: white;
+}
+
+/* Style the table */
+table {
+  width:100%;
+}
+table, th, td {
+  border: 1px solid black;
+  border-collapse: collapse;
+}
+th, td {
+  padding: 15px;
+  text-align: left;
+}
+table#t01 tr:nth-child(even) {
+  background-color: #eee;
+}
+table#t01 tr:nth-child(odd) {
+ background-color: #fff;
+}
+table#t01 th {
+  background-color: black;
+  color: white;
+}
+/* Create two columns/boxes that floats next to each other */
+nav {
+  float: left;
+  width: 30%;
+  height: 300px; /* only for demonstration, should be removed */
+  background: #ccc;
+  padding: 20px;
+}
+
+/* Style the list inside the menu */
+nav ul {
+  list-style-type: none;
+  padding: 0;
+}
+
+article {
+  float: left;
+  padding: 20px;
+  width: 70%;
+  background-color: #f1f1f1;
+  height: 300px; /* only for demonstration, should be removed */
+}
+
+/* Clear floats after the columns */
+section:after {
+  content: "";
+  display: table;
+  clear: both;
+}
+
+/* Style the footer */
+footer {
+  background-color: #777;
+  padding: 10px;
+  text-align: center;
+  color: white;
+}
+
+/* Responsive layout - makes the two columns/boxes stack on top of each other instead of next to each other, on small screens */
+@media (max-width: 600px) {
+  nav, article {
+    width: 100%;
+    height: auto;
+  }
+}
+</style>
+</head>
+<body onload="init()">
+
+  <form method="post" action="/">
+      <h4 align="right">Logged In As: {{ user.email().split('@')[0] }}
+      <input type="hidden" name="button" value="Home">
+      <button class="button">
+          <div class="button_element_logout">
+          Home
+      </div>
+      </button>
+      <a href="{{ url }}" class="button_element_logout">
+              Logout
+      </a>
+  </form><h4>
+<header>
+  <h2>Welcome to Dropbox</h2>
+</header>
+
+<section>
+  <div class="content">
+    <h2>File Upload</h2>
+      <table>
+                      <!-- upload row -->
+          <tr>
+              <!-- form for uploading a file to the blobstore -->
+              <form action="{{ upload_url }}" method="post" enctype="multipart/form-data">
+                  <td>
+                      <input type="file" name="file" id="file_upload" class="input_file" multiple>
+                  </td>
+                  <td class="icon_row">
+                      <button type="submit" class="button" value="Upload">
+                          <i class="material-icons">upload</i>
+                      </button>
+                  </td>
+              </form>
+          </tr>
+      </table>
+    </div>
+      <div class="content"><br>
+      <h2>Directory Add</h2>
+      <table>
+          <!-- add directory row -->
+          <tr>
+              <form method="post" action="/">
+                  <td>
+                      <input type="text" class="text_input" name="value" id="text_input"
+                             placeholder="Add a new directory..."/>
+
+                  </td>
+                  <td class="icon_row">
+                      <button type="submit" class="button" name="button" value="Add">
+                          <i class="material-icons">add</i>
+                      </button>
+                  </td>
+              </form>
+          </tr>
+      </table>
+    </div><hr>
+      <br>
+
+      <h1>File & Directories Path</h1>
+<table class="table_content" style="width:100%">
+    {% if is_not_in_root %}
+        <tr>
+            <!-- icon -->
+            <th class="icon_row">
+                <i class="material-icons">path</i>
+            </th>
+            <!-- current path -->
+            <th colspan="2">
+                {{ current_path }}
+            </th>
+
+            <!-- navigate up link -->
+            <th class="icon_row">
+                <form method="post" action="/" style="margin: 0px;">
+                    <button type="submit" name="button" class="button_back" value="Up">
+                        <i class="material-icons">../</i>
+                    </button>
+                </form>
+            </th>
+        </tr>
+    {% else %}
+        <tr>
+            <!-- icon -->
+            <th class="icon_row">
+                <i class="material-icons" style="padding-top: 7px; padding-bottom: 7px">path</i>
+            </th>
+            <!-- current path -->
+            <th colspan="8">
+                {{ current_path }}
+            </th>
+
+        </tr>
+    {% endif %}
+    <br>
+    {% if directories %}
+        {% for directory in directories %}
+            <tr class="content_table_row">
+                <!-- icon -->
+                <td class="table_data icon_row">
+                    <a href="/?directory_name={{ directory }}">
+                        <i class="material-icons">dir</i>
+                    </a>&nbsp&nbsp
+                        &nbsp&nbsp&nbsp&nbsp
+                            &nbsp&nbsp&nbsp&nbsp
+                                &nbsp&nbsp&nbsp&nbsp
+                                    &nbsp&nbsp
+                </td>
+                <!-- directory name + link -->
+                <td class="table_data" colspan="8">
+                    <a href="/?directory_name={{ directory }}" class="table_link">
+                        {{ directory }}
+                    </a>
+                </td>
+                <!-- delete button -->
+                <td class="table_data icon_row">
+                    <form method="post" action="/" style="margin: 0px;">
+                        <input type="hidden" name="name" value="{{ directory }}"/>
+                        <input type="hidden" name="fType" value="directory"/>
+                        <button type="submit" name="button" class="button_delete" value="Delete">
+                            <i class="material-icons">delete</i>
+                        </button>
+                    </form>
+                </td>
+            </tr>
+        {% endfor %}
+    {% endif %}
+    {% if files %}
+        {% for i in range(length) %}
+            <tr class="content_table_row">
+                <!-- icon -->
+                <td class="table_data icon_row">
+                    <a href="/download?file_name={{ file }}">
+                        <i class="material-icons">file</i>
+                    </a>
+                </td>
+                <!-- filename + download link -->
+                <td class="table_data" colspan="2">
+                    <a href="/download?file_name={{ files[i] }}" class="table_link">
+                          {{ files[i].split('.')[0] }}
+                    </a>
+                </td>
+                <td class="table_data" colspan="2" id = "id_content2">
+                    {{file_size[i]}} Bytes
+                </td>
+                <td class="table_data" colspan="2">
+                    {{file_type[i].split('/')[0]}}
+                </td>
+                <td class="table_data" colspan="2">
+                    {{fileCreationDate[i] }}
+                </td>
+
+
+             </td>
+                <!-- delete button -->
+                <td class="table_data icon_row">
+                    <form method="post" action="/" style="margin: 0px;">
+                        <input type="hidden" name="name" value="{{ files[i] }}"/>
+                        <input type="hidden" name="fType" value="file"/>
+                        <button type="submit" name="button" class="button_delete" value="Delete">
+                            <i class="material-icons">delete</i>
+                        </button>
+                    </form>
+                </td>
+                <!-- move button -->
+              <td class="data icon_row">
+                  <form method="post" action="/" style="margin: 0px;">
+                      <input type="hidden" name="name" value="{{ files[i] }}"/>
+                      <input type="hidden" name="kind" value="file"/>
+                      <form>
+                        <label>&nbsp&nbsp&nbspSelect a Directory to move the file</label>
+                        <select>
+                        {% if directories %}
+                          {% for directory in directories %}
+                            <option><a href="/?directory_name={{ directory }}" class="table_link">
+                              {{ directory }}
+                            </a></option>
+                          {% endfor %}
+                        {% endif %}
+                        </select>
+&nbsp&nbsp
+                        <button type="submit" name="button" class="button_move" value="Move">
+                          <i class="material-icons">Move</i>
+                        </button>
+                          </form>
+                  </form>
+              </td>
+
+            </tr>
+        {% endfor %}
+    {% endif %}
+</table>
+<br><br><br>
+  <div><aside class="">
+      <div style="display: flex; justify-content:center ">
+          <h3>Total File Size in Bytes:</h3>&nbsp<h6 style="padding-right: 50px; color: #333">&nbsp{{totalCount}}</h6>
+      <div style="display: flex; justify-content:center ">
+          <h3>Directory Count:</h3>&nbsp<h6 style="padding-right: 50px; color: #333">{{total_directories}}</h6>
+      </div>
+      <div style="display: flex; justify-content:center ">
+          <h3>File Count:</h3>&nbsp<h6 style="padding-right: 50px; color: #333">{{ total_no_of_files }}</h6>
+      </div>
+      <a class="sub" style="color: #bdbdbd;">
+      </a>
+  </div>
+
+  </aside>
+</section>
+
+<footer>
+  <p>Dropbox - Cloud Storage</p>
+</footer>
+
+</body>
+</html>
